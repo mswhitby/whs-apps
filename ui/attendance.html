@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Day Attendance Dashboard</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #334155;
+      height: 100%;
+      overflow-x: hidden;
+    }
+    
+    html {
+      height: 100%;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    .dashboard-container {
+      display: flex;
+      height: 100vh;
+      min-height: 100%;
+    }
+    
+    .sidebar {
+      width: 280px;
+      background: #1e293b;
+      color: white;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 6px rgba(0,0,0,0.1);
+    }
+    
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid #334155;
+    }
+    
+    .sidebar-header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    
+    .sidebar-header p {
+      margin: 4px 0 0 0;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    
+    .nav-menu {
+      flex: 1;
+      padding: 20px 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      color: #cbd5e1;
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 14px;
+    }
+    
+    .nav-item:hover {
+      background: #334155;
+      color: white;
+    }
+    
+    .nav-item.active {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .nav-item i {
+      width: 20px;
+      margin-right: 12px;
+      font-size: 16px;
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .top-header {
+      background: white;
+      padding: 16px 32px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .header-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    
+    .content-area {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+    }
+    
+    .view-panel {
+      display: none;
+    }
+    
+    .view-panel.active {
+      display: block;
+    }
+    
+    /* Teacher View Styles */
+    .room-header {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .room-info h2 {
+      margin: 0 0 4px 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .room-info p {
+      margin: 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+    
+    .status-info {
+      text-align: right;
+    }
+    
+    .attendance-rate {
+      font-size: 24px;
+      font-weight: 700;
+      color: #059669;
+      margin: 0;
+    }
+    
+    .last-updated {
+      font-size: 13px;
+      color: #64748b;
+      margin: 4px 0 0 0;
+    }
+    
+    .student-roster {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .roster-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    
+    .roster-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .roster-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .roster-table th {
+      background: #f8fafc;
+      padding: 16px 24px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .roster-table td {
+      padding: 16px 24px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+    }
+    
+    .roster-table tr:hover {
+      background: #f8fafc;
+    }
+    
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .student-name {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+    
+    .student-id {
+      font-size: 12px;
+      color: #64748b;
+    }
+    
+    .check-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .check-btn {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .check-btn.present {
+      background: #dcfce7;
+      border-color: #16a34a;
+      color: #15803d;
+    }
+    
+    .check-btn.absent {
+      background: #fef2f2;
+      border-color: #dc2626;
+      color: #dc2626;
+    }
+    
+    .check-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Admin View Styles */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    .kpi-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 4px 0;
+    }
+    
+    .kpi-label {
+      font-size: 14px;
+      color: #64748b;
+      margin: 0;
+    }
+    
+    .kpi-change {
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .kpi-change.positive {
+      color: #059669;
+    }
+    
+    .kpi-change.negative {
+      color: #dc2626;
+    }
+    
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      height: calc(100% - 200px);
+    }
+    
+    .filter-panel {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      height: fit-content;
+    }
+    
+    .filter-panel h3 {
+      margin: 0 0 20px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .filter-group {
+      margin-bottom: 20px;
+    }
+    
+    .filter-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+    }
+    
+    .charts-area {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    .chart-card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .chart-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 250px;
+    }
+    
+    .proctor-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+    
+    .proctor-table th,
+    .proctor-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+    
+    .proctor-table th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .completion-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .completion-high {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    
+    .completion-medium {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    
+    .completion-low {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f4f6;
+      border-radius: 50%;
+      border-top-color: #3b82f6;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1f2937;
+      color: white;
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 1000;
+      max-width: 400px;
+    }
+    
+    .toast.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+      }
+      
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="dashboard-container"><!-- Sidebar Navigation -->
+   <div class="sidebar">
+    <div class="sidebar-header">
+     <h1 id="school-name">Lincoln High School</h1>
+     <p id="test-name">State Assessment 2024</p>
+    </div>
+    <nav class="nav-menu"><button class="nav-item active" onclick="switchView('teacher')"> <i class="fas fa-chalkboard-teacher"></i> Teacher Dashboard </button> <button class="nav-item" onclick="switchView('admin')"> <i class="fas fa-chart-bar"></i> Admin Reports </button> <button class="nav-item" onclick="refreshData()"> <i class="fas fa-sync-alt"></i> Refresh Data </button> <button class="nav-item" onclick="showToast('Logout functionality would redirect to login page')"> <i class="fas fa-sign-out-alt"></i> Logout </button>
+    </nav>
+   </div><!-- Main Content Area -->
+   <div class="main-content"><!-- Top Header -->
+    <div class="top-header">
+     <h1 class="header-title" id="header-title">Test Day Attendance – Teacher View</h1>
+     <div class="header-actions"><button class="btn btn-secondary" onclick="exportData()"> <i class="fas fa-download"></i> Export Report </button> <button class="btn btn-primary" onclick="addSampleData()"> <i class="fas fa-plus"></i> Add Sample Data </button>
+     </div>
+    </div><!-- Content Area -->
+    <div class="content-area"><!-- Teacher View -->
+     <div id="teacher-view" class="view-panel active">
+      <div class="room-header">
+       <div class="room-info">
+        <h2 id="room-number">Room 204</h2>
+        <p>Proctor: Ms. Johnson | Period 3</p>
+       </div>
+       <div class="status-info">
+        <p class="attendance-rate" id="attendance-rate">92%</p>
+        <p class="last-updated" id="last-updated">Last updated: 10:45 AM</p>
+       </div>
+      </div>
+      <div class="student-roster">
+       <div class="roster-header">
+        <h3>Student Roster</h3>
+       </div>
+       <table class="roster-table">
+        <thead>
+         <tr>
+          <th>Student</th>
+          <th>Check 1</th>
+          <th>Check 2</th>
+          <th>Check 3</th>
+          <th>Check 4</th>
+         </tr>
+        </thead>
+        <tbody id="student-roster-body"><!-- Students will be populated here -->
+        </tbody>
+       </table>
+      </div>
+     </div><!-- Admin View -->
+     <div id="admin-view" class="view-panel"><!-- KPI Cards -->
+      <div class="kpi-grid">
+       <div class="kpi-card">
+        <p class="kpi-value" id="total-students">0</p>
+        <p class="kpi-label">Total Students</p>
+        <p class="kpi-change positive">+5 from yesterday</p>
+       </div>
+       <div class="kpi-card">
+        <p class="kpi-value" id="attendance-rate-kpi">0%</p>
+        <p class="kpi-label">Attendance Rate</p>
+        <p class="kpi-change positive">+2.3% from last test</p>
+       </div>
+       <div class="kpi-card">
+        <p class="kpi-value" id="rooms-checked">0</p>
+        <p class="kpi-label">Rooms Checked In</p>
+        <p class="kpi-change positive">All rooms active</p>
+       </div>
+       <div class="kpi-card">
+        <p class="kpi-value" id="late-missing">0</p>
+        <p class="kpi-label">Late/Missing</p>
+        <p class="kpi-change negative">3 students</p>
+       </div>
+      </div><!-- Dashboard Grid -->
+      <div class="dashboard-grid"><!-- Filter Panel -->
+       <div class="filter-panel">
+        <h3>Filters</h3>
+        <div class="filter-group"><label>Date</label> <input type="date" id="filter-date" onchange="applyFilters()">
+        </div>
+        <div class="filter-group"><label>Room</label> <select id="filter-room" onchange="applyFilters()"> <option value="">All Rooms</option> </select>
+        </div>
+        <div class="filter-group"><label>Proctor</label> <select id="filter-proctor" onchange="applyFilters()"> <option value="">All Proctors</option> </select>
+        </div><button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="applyFilters()"> Apply Filters </button>
+       </div><!-- Charts Area -->
+       <div class="charts-area"><!-- Attendance by Room Chart -->
+        <div class="chart-card">
+         <div class="chart-header">
+          <h3 class="chart-title">Attendance by Room</h3><button class="btn btn-secondary" onclick="refreshCharts()"> <i class="fas fa-refresh"></i> </button>
+         </div>
+         <div class="chart-container">
+          <canvas id="room-chart"></canvas>
+         </div>
+        </div><!-- Proctor Performance -->
+        <div class="chart-card">
+         <div class="chart-header">
+          <h3 class="chart-title">Proctor Performance</h3>
+         </div>
+         <table class="proctor-table">
+          <thead>
+           <tr>
+            <th>Proctor</th>
+            <th>Room</th>
+            <th>Students</th>
+            <th>Completion</th>
+           </tr>
+          </thead>
+          <tbody id="proctor-table-body"><!-- Proctor data will be populated here -->
+          </tbody>
+         </table>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script>
+    const defaultConfig = {
+      school_name: "Lincoln High School",
+      test_name: "State Assessment 2024",
+      primary_color: "#3b82f6",
+      secondary_color: "#059669",
+      background_color: "#f8fafc",
+      text_color: "#1e293b",
+      accent_color: "#64748b"
+    };
+    
+    let allRecords = [];
+    let filteredRecords = [];
+    let currentView = 'teacher';
+    let roomChart = null;
+    
+    const sampleStudents = [
+      { name: "Emma Rodriguez", id: "STU001", room: "204" },
+      { name: "James Chen", id: "STU002", room: "204" },
+      { name: "Sophia Williams", id: "STU003", room: "204" },
+      { name: "Marcus Johnson", id: "STU004", room: "204" },
+      { name: "Olivia Davis", id: "STU005", room: "204" },
+      { name: "Ethan Brown", id: "STU006", room: "205" },
+      { name: "Ava Martinez", id: "STU007", room: "205" },
+      { name: "Noah Wilson", id: "STU008", room: "205" },
+      { name: "Isabella Garcia", id: "STU009", room: "206" },
+      { name: "Liam Anderson", id: "STU010", room: "206" }
+    ];
+    
+    const proctors = ["Ms. Johnson", "Mr. Smith", "Dr. Williams"];
+    
+    const dataHandler = {
+      onDataChanged(data) {
+        allRecords = data;
+        filteredRecords = data;
+        
+        if (currentView === 'teacher') {
+          renderTeacherView();
+        } else {
+          renderAdminView();
+        }
+        
+        updateKPIs();
+      }
+    };
+    
+    async function initializeApp() {
+      const initResult = await window.dataSdk.init(dataHandler);
+      if (!initResult.isOk) {
+        showToast('Failed to initialize system');
+        return;
+      }
+      
+      await window.elementSdk.init({
+        defaultConfig,
+        onConfigChange: async (config) => {
+          document.getElementById('school-name').textContent = config.school_name || defaultConfig.school_name;
+          document.getElementById('test-name').textContent = config.test_name || defaultConfig.test_name;
+          
+          const primaryColor = config.primary_color || defaultConfig.primary_color;
+          const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+          const backgroundColor = config.background_color || defaultConfig.background_color;
+          const textColor = config.text_color || defaultConfig.text_color;
+          
+          document.body.style.background = backgroundColor;
+          
+          const primaryButtons = document.querySelectorAll('.btn-primary');
+          primaryButtons.forEach(btn => {
+            btn.style.background = primaryColor;
+          });
+          
+          const kpiCards = document.querySelectorAll('.kpi-card');
+          kpiCards.forEach(card => {
+            card.style.borderLeftColor = primaryColor;
+          });
+          
+          const activeNavItems = document.querySelectorAll('.nav-item.active');
+          activeNavItems.forEach(item => {
+            item.style.background = primaryColor;
+          });
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => {
+                config.secondary_color = value;
+                window.elementSdk.setConfig({ secondary_color: value });
+              }
+            },
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => {
+                config.accent_color = value;
+                window.elementSdk.setConfig({ accent_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["school_name", config.school_name || defaultConfig.school_name],
+          ["test_name", config.test_name || defaultConfig.test_name]
+        ])
+      });
+      
+      // Set today's date in filter
+      document.getElementById('filter-date').value = new Date().toISOString().split('T')[0];
+    }
+    
+    function switchView(view) {
+      currentView = view;
+      
+      // Update navigation
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update header
+      const headerTitle = document.getElementById('header-title');
+      headerTitle.textContent = view === 'teacher' 
+        ? 'Test Day Attendance – Teacher View' 
+        : 'Test Day Attendance – Admin View';
+      
+      // Show/hide panels
+      document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`${view}-view`).classList.add('active');
+      
+      if (view === 'teacher') {
+        renderTeacherView();
+      } else {
+        renderAdminView();
+        updateFilterOptions();
+      }
+    }
+    
+    async function addSampleData() {
+      if (allRecords.length >= 999) {
+        showToast('Maximum limit of 999 records reached');
+        return;
+      }
+      
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="loading-spinner"></span> Adding...';
+      btn.disabled = true;
+      
+      try {
+        // Check if we already have data to avoid duplicates
+        const existingIds = new Set(allRecords.map(r => r.student_id));
+        
+        for (const student of sampleStudents) {
+          if (existingIds.has(student.id)) {
+            continue; // Skip if student already exists
+          }
+          
+          if (allRecords.length >= 999) {
+            break; // Stop if we hit the limit
+          }
+          
+          const studentData = {
+            student_id: student.id,
+            student_name: student.name,
+            room_number: student.room,
+            proctor_name: proctors[Math.floor(Math.random() * proctors.length)],
+            check_1: Math.random() > 0.1 ? 'Present' : 'Absent',
+            check_2: Math.random() > 0.15 ? 'Present' : 'Absent',
+            check_3: Math.random() > 0.2 ? 'Present' : 'Absent',
+            check_4: Math.random() > 0.25 ? 'Present' : 'Absent',
+            last_updated: new Date().toISOString(),
+            test_date: new Date().toISOString().split('T')[0]
+          };
+          
+          const result = await window.dataSdk.create(studentData);
+          
+          if (!result.isOk) {
+            console.error('Failed to create student record:', result.error);
+            showToast('Failed to add some student records');
+            break;
+          }
+          
+          // Small delay to prevent overwhelming the system
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        showToast('Sample data added successfully!');
+      } catch (error) {
+        console.error('Error adding sample data:', error);
+        showToast('Failed to add sample data');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+    
+    function renderTeacherView() {
+      const tbody = document.getElementById('student-roster-body');
+      const room204Students = allRecords.filter(r => r.room_number === '204');
+      
+      if (room204Students.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">
+              No students in Room 204. Click "Add Sample Data" to populate the roster.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      
+      tbody.innerHTML = room204Students.map(student => `
+        <tr>
+          <td>
+            <div class="student-info">
+              <div class="student-name">${student.student_name}</div>
+              <div class="student-id">ID: ${student.student_id}</div>
+            </div>
+          </td>
+          ${[1, 2, 3, 4].map(check => `
+            <td>
+              <button class="check-btn ${student['check_' + check] === 'Present' ? 'present' : 'absent'}" 
+                      onclick="toggleAttendance('${student.__backendId}', ${check})">
+                ${student['check_' + check] === 'Present' ? 'P' : 'A'}
+              </button>
+            </td>
+          `).join('')}
+        </tr>
+      `).join('');
+      
+      updateAttendanceRate();
+    }
+    
+    async function toggleAttendance(backendId, checkNumber) {
+      const student = allRecords.find(r => r.__backendId === backendId);
+      if (!student) return;
+      
+      const currentStatus = student['check_' + checkNumber];
+      student['check_' + checkNumber] = currentStatus === 'Present' ? 'Absent' : 'Present';
+      student.last_updated = new Date().toISOString();
+      
+      const result = await window.dataSdk.update(student);
+      
+      if (!result.isOk) {
+        showToast('Failed to update attendance');
+      }
+    }
+    
+    function updateAttendanceRate() {
+      const room204Students = allRecords.filter(r => r.room_number === '204');
+      if (room204Students.length === 0) return;
+      
+      let totalChecks = 0;
+      let presentChecks = 0;
+      
+      room204Students.forEach(student => {
+        [1, 2, 3, 4].forEach(check => {
+          totalChecks++;
+          if (student['check_' + check] === 'Present') {
+            presentChecks++;
+          }
+        });
+      });
+      
+      const rate = totalChecks > 0 ? Math.round((presentChecks / totalChecks) * 100) : 0;
+      document.getElementById('attendance-rate').textContent = `${rate}%`;
+      document.getElementById('last-updated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
+    
+    function renderAdminView() {
+      updateFilterOptions();
+      renderCharts();
+      renderProctorTable();
+    }
+    
+    function updateFilterOptions() {
+      const rooms = [...new Set(allRecords.map(r => r.room_number))];
+      const proctorsInData = [...new Set(allRecords.map(r => r.proctor_name))];
+      
+      const roomSelect = document.getElementById('filter-room');
+      roomSelect.innerHTML = '<option value="">All Rooms</option>' + 
+        rooms.map(room => `<option value="${room}">Room ${room}</option>`).join('');
+      
+      const proctorSelect = document.getElementById('filter-proctor');
+      proctorSelect.innerHTML = '<option value="">All Proctors</option>' + 
+        proctorsInData.map(proctor => `<option value="${proctor}">${proctor}</option>`).join('');
+    }
+    
+    function applyFilters() {
+      const dateFilter = document.getElementById('filter-date').value;
+      const roomFilter = document.getElementById('filter-room').value;
+      const proctorFilter = document.getElementById('filter-proctor').value;
+      
+      filteredRecords = allRecords.filter(record => {
+        const recordDate = record.test_date;
+        return (!dateFilter || recordDate === dateFilter) &&
+               (!roomFilter || record.room_number === roomFilter) &&
+               (!proctorFilter || record.proctor_name === proctorFilter);
+      });
+      
+      updateKPIs();
+      renderCharts();
+      renderProctorTable();
+    }
+    
+    function updateKPIs() {
+      const totalStudents = filteredRecords.length;
+      document.getElementById('total-students').textContent = totalStudents;
+      
+      let totalChecks = 0;
+      let presentChecks = 0;
+      
+      filteredRecords.forEach(student => {
+        [1, 2, 3, 4].forEach(check => {
+          totalChecks++;
+          if (student['check_' + check] === 'Present') {
+            presentChecks++;
+          }
+        });
+      });
+      
+      const attendanceRate = totalChecks > 0 ? Math.round((presentChecks / totalChecks) * 100) : 0;
+      document.getElementById('attendance-rate-kpi').textContent = `${attendanceRate}%`;
+      
+      const rooms = new Set(filteredRecords.map(r => r.room_number));
+      document.getElementById('rooms-checked').textContent = rooms.size;
+      
+      const absentCount = totalChecks - presentChecks;
+      document.getElementById('late-missing').textContent = absentCount;
+    }
+    
+    function renderCharts() {
+      const roomData = {};
+      
+      filteredRecords.forEach(student => {
+        if (!roomData[student.room_number]) {
+          roomData[student.room_number] = { present: 0, absent: 0 };
+        }
+        
+        [1, 2, 3, 4].forEach(check => {
+          if (student['check_' + check] === 'Present') {
+            roomData[student.room_number].present++;
+          } else {
+            roomData[student.room_number].absent++;
+          }
+        });
+      });
+      
+      if (roomChart) {
+        roomChart.destroy();
+      }
+      
+      const ctx = document.getElementById('room-chart').getContext('2d');
+      roomChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(roomData).map(room => `Room ${room}`),
+          datasets: [
+            {
+              label: 'Present',
+              data: Object.values(roomData).map(d => d.present),
+              backgroundColor: '#059669',
+              borderRadius: 4
+            },
+            {
+              label: 'Absent',
+              data: Object.values(roomData).map(d => d.absent),
+              backgroundColor: '#dc2626',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: '#f1f5f9'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function renderProctorTable() {
+      const proctorData = {};
+      
+      filteredRecords.forEach(student => {
+        if (!proctorData[student.proctor_name]) {
+          proctorData[student.proctor_name] = {
+            room: student.room_number,
+            students: 0,
+            totalChecks: 0,
+            presentChecks: 0
+          };
+        }
+        
+        proctorData[student.proctor_name].students++;
+        
+        [1, 2, 3, 4].forEach(check => {
+          proctorData[student.proctor_name].totalChecks++;
+          if (student['check_' + check] === 'Present') {
+            proctorData[student.proctor_name].presentChecks++;
+          }
+        });
+      });
+      
+      const tbody = document.getElementById('proctor-table-body');
+      tbody.innerHTML = Object.entries(proctorData).map(([proctor, data]) => {
+        const completion = data.totalChecks > 0 ? Math.round((data.presentChecks / data.totalChecks) * 100) : 0;
+        let badgeClass = 'completion-low';
+        if (completion >= 90) badgeClass = 'completion-high';
+        else if (completion >= 75) badgeClass = 'completion-medium';
+        
+        return `
+          <tr>
+            <td>${proctor}</td>
+            <td>Room ${data.room}</td>
+            <td>${data.students}</td>
+            <td><span class="completion-badge ${badgeClass}">${completion}%</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function refreshData() {
+      showToast('Data refreshed successfully!');
+      if (currentView === 'teacher') {
+        renderTeacherView();
+      } else {
+        renderAdminView();
+      }
+    }
+    
+    function refreshCharts() {
+      renderCharts();
+      showToast('Charts updated!');
+    }
+    
+    function exportData() {
+      if (filteredRecords.length === 0) {
+        showToast('No data to export');
+        return;
+      }
+      
+      const headers = ['Student Name', 'Student ID', 'Room', 'Proctor', 'Check 1', 'Check 2', 'Check 3', 'Check 4', 'Date'];
+      const rows = filteredRecords.map(record => [
+        record.student_name,
+        record.student_id,
+        record.room_number,
+        record.proctor_name,
+        record.check_1,
+        record.check_2,
+        record.check_3,
+        record.check_4,
+        record.test_date
+      ]);
+      
+      const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance_report_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      showToast('Report exported successfully!');
+    }
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+    
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99adb15da5814871',t:'MTc2MjUyNzU0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
